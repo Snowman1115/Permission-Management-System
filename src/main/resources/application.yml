@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: Permission-Management-System
+  datasource:
+    driver-class-name: "com.mysql.cj.jdbc.Driver"
+    url: "jdbc:mysql://localhost:3306/pms?serverTimezone=Asia/Kuala_Lumpur"
+    username: "root"
+    password: "1234"
+
+server:
+  port: 9090
+  servlet:
+    context-path: /api
+
+mybatis-plus:
+  mapper-locations: "classpath:mapper/*.xml"
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+files:
+  upload:
+    path: "C:/Users/Olaf/Desktop/Backend_Management_System/files/"
