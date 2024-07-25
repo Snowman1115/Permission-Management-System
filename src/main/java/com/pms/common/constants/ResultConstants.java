@@ -78,4 +78,9 @@ public interface ResultConstants {
     int NOT_EXTENDED = 510;
     int NETWORK_AUTHENTICATION_REQUIRED = 511;
 
+
+    // Custom Errors
+    int NO_LOGIN = 600;
+    int NO_AUTH = 700;
+
 }
