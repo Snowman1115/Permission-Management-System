@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
  */
 @Getter
 @Setter
+@Data
 @TableName("pms_user")
 public class User implements Serializable, UserDetails {
 
@@ -147,6 +149,6 @@ public class User implements Serializable, UserDetails {
      * Query User Permission List
      */
     @TableField(exist = false)
-    private List<String> permissionList;
+    private List<Permission> permissionList;
 
 }

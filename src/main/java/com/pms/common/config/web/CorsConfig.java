@@ -1,4 +1,4 @@
-package com.pms.common.config;
+package com.pms.common.config.web;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

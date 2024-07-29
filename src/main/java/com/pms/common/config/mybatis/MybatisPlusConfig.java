@@ -1,4 +1,4 @@
-package com.pms.common.config;
+package com.pms.common.config.mybatis;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;

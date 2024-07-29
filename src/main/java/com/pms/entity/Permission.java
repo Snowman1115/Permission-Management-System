@@ -1,11 +1,15 @@
 package com.pms.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -92,5 +96,23 @@ public class Permission implements Serializable {
      */
     private Date updateTime;
 
+    /**
+     * Children Menu ArrayList
+     */
+    @TableField(exist = false)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<Permission> children = new ArrayList<Permission>();
+
+    /**
+     * Menu Or Button
+     */
+    @TableField(exist = false)
+    private String value;
+
+    /**
+     * Default Menu Expend Value
+     */
+    @TableField(exist = false)
+    private Boolean isOpen;
 
 }

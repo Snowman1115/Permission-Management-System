@@ -4,9 +4,17 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pms.common.constants.ResultConstants;
 import com.pms.common.result.Result;
+import com.pms.common.utils.JwtUtil;
 import com.pms.exception.ServiceException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import com.pms.service.IUserService;
@@ -27,6 +35,8 @@ public class UserController {
 
     @Resource
     private IUserService userService;
+    @Resource
+    private JwtUtil jwtUtil;
 
     /**
      * Get All User
@@ -113,6 +123,34 @@ public class UserController {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.orderByDesc("id");
         return Result.success(userService.page(new Page<>(pageNum,pageSize), queryWrapper));
+    }
+
+    /**
+     * Refresh Token
+     * @param request
+     * @return Result
+     */
+    @PostMapping("/refreshToken")
+    public Result refToken(HttpServletRequest request) {
+        // Get Token from Header
+        String token = request.getRequestURI();
+        // Determine header isNull
+        if (ObjectUtils.isEmpty(token)) {
+            // Get token from parameters
+            token = request.getParameter("token");
+        }
+        // get UserDetails from spring security
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // Get User Details
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        // Define Variable store new token
+        String newToken = "";
+        // Verify Post Token is Legal
+        Claims claims = JwtUtil.parseJWT(token);
+        if (ObjectUtils.isEmpty(claims)) {
+            // newToken = jwtUtil.refreshToken(token);
+        }
+        return Result.success();
     }
 
 }
