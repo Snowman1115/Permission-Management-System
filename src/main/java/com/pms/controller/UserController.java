@@ -2,20 +2,29 @@ package com.pms.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pms.common.config.redis.RedisService;
 import com.pms.common.constants.ResultConstants;
 import com.pms.common.result.Result;
 import com.pms.common.utils.JwtUtil;
+import com.pms.common.utils.MenuTreeUtil;
+import com.pms.entity.Permission;
+import com.pms.entity.Router;
+import com.pms.entity.UserInfo;
 import com.pms.exception.ServiceException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import com.pms.service.IUserService;
 import com.pms.entity.User;
@@ -37,6 +46,8 @@ public class UserController {
     private IUserService userService;
     @Resource
     private JwtUtil jwtUtil;
+    @Resource
+    private RedisService redisService;
 
     /**
      * Get All User
@@ -130,10 +141,11 @@ public class UserController {
      * @param request
      * @return Result
      */
+
     @PostMapping("/refreshToken")
     public Result refToken(HttpServletRequest request) {
         // Get Token from Header
-        String token = request.getRequestURI();
+        String token = request.getHeader("token");
         // Determine header isNull
         if (ObjectUtils.isEmpty(token)) {
             // Get token from parameters
@@ -146,11 +158,58 @@ public class UserController {
         // Define Variable store new token
         String newToken = "";
         // Verify Post Token is Legal
-        Claims claims = JwtUtil.parseJWT(token);
-        if (ObjectUtils.isEmpty(claims)) {
-            // newToken = jwtUtil.refreshToken(token);
+        Claims claims = JwtUtil.getClaimsFromToken(token);
+        if (!ObjectUtils.isEmpty(claims)) {
+            newToken = jwtUtil.refreshToken(token);
         }
-        return Result.success();
+        String oldTokenKey = "token_" + token;
+        redisService.del(oldTokenKey);
+        String newTokenKey = "token_" + newToken;
+        redisService.set(newTokenKey, newToken, claims.getExpiration().getTime());
+        return Result.success(newToken);
+    }
+
+    @GetMapping("/getInfo")
+    public Result getInfo(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return Result.error(ResultConstants.INTERNAL_SERVER_ERROR, "User Info Query Fail");
+        }
+        User user = (User) authentication.getPrincipal();
+        List<Permission> permissionList = user.getPermissionList();
+        Object[] roles =
+                permissionList.stream()
+                        .filter(Objects::nonNull)
+                        .map(Permission::getCode).toArray();
+        UserInfo userInfo = new UserInfo(user.getId(),user.getNickname(),user.getAvatar(),null,roles);
+        return Result.success(userInfo);
+    }
+
+    @GetMapping("/getMenus")
+    public Result getMenuList() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        List<Permission> permissions = user.getPermissionList();
+        List<Permission> collect = permissions.stream()
+                .filter(item -> item != null && item.getType() != 2)
+                .collect(Collectors.toList());
+        // Generate Router
+        List<Router> routers = MenuTreeUtil.genRouter(collect, 0L);
+        return Result.success(routers);
+    }
+
+    @PostMapping("/logout")
+    public Result logout(HttpServletRequest request, HttpServletResponse response) {
+        String token = request.getHeader("token");
+        if (ObjectUtils.isEmpty(token)) {
+            token = request.getParameter("token");
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            new SecurityContextLogoutHandler().logout(request,response,authentication);
+            redisService.del("token_" + token);
+        }
+        return Result.success("", "Logout Successful.");
     }
 
 }

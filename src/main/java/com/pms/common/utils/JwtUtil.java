@@ -1,5 +1,6 @@
 package com.pms.common.utils;
 
+import com.alibaba.fastjson.JSON;
 import io.jsonwebtoken.*;
 import org.springframework.stereotype.Service;
 
@@ -95,12 +96,37 @@ public class JwtUtil {
      * @return
      * @throws Exception
      */
-    public static Claims parseJWT(String jwt) {
+    public static Claims getClaimsFromToken(String jwt) {
         SecretKey secretKey = generalKey();
         return Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(jwt)
                 .getBody();
     }
+
+    /**
+     * Refresh Token
+     * @param token
+     * @return New Token
+     */
+    public static String refreshToken(String token) {
+        String refreshedToken;
+        try {
+            Claims claims = getClaimsFromToken(token);
+            claims.put(Claims.ISSUED_AT, new Date());
+            String userJson = claims.getSubject();
+            refreshedToken = createJWT(userJson, JwtUtil.JWT_TTL);
+        } catch (Exception e) {
+            refreshedToken = null;
+        }
+        return refreshedToken;
+    }
+
+    public Boolean isTokenExpired(String token) {
+        Claims claims = getClaimsFromToken(token);
+        Date expiration = claims.getExpiration();
+        return expiration.before(new Date());
+    }
+
 
 }

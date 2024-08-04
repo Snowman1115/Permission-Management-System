@@ -81,7 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throw new PmsAuthenticationException("Token Expired");
         }
         // if token is valid then parse token
-        Claims claims = jwtUtil.parseJWT(token);
+        Claims claims = jwtUtil.getClaimsFromToken(token);
         if (ObjectUtils.isEmpty(claims)) {
             throw new PmsAuthenticationException("Token Parse Fail");
         }
